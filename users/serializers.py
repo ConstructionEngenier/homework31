@@ -3,6 +3,15 @@ from rest_framework import serializers
 from users.models import User, Location
 
 
+FORBIDDEN_DOMAIN = "rambler.ru"
+
+
+class EmailRamblerCheck:
+    def __call__(self, value):
+        if value.endswith(FORBIDDEN_DOMAIN):
+            raise serializers.ValidationError(f"You can't use {FORBIDDEN_DOMAIN} domain")
+
+
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
@@ -29,6 +38,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         many=True,
         slug_field="name"
     )
+    email = serializers.EmailField(validators=[EmailRamblerCheck()])
 
     def is_valid(self, raise_exception=False):
         self._locations = self.initial_data.pop("locations")
@@ -57,6 +67,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         many=True,
         slug_field="name"
     )
+    email = serializers.EmailField(validators=[EmailRamblerCheck()])
 
     def is_valid(self, raise_exception=False):
         self._locations = self.initial_data.pop("locations")
