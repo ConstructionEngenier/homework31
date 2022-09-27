@@ -1,5 +1,21 @@
+from datetime import date
+
+from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
+
+
+USER_MIN_AGE = 9
+
+
+def check_birth_date(value: date):
+    user_age = relativedelta(date.today(), value).years
+    if user_age < USER_MIN_AGE:
+        raise ValidationError(
+            '%(value)s too small',
+            params={'value': user_age}
+        )
 
 
 class Location(models.Model):
@@ -20,13 +36,15 @@ class User(AbstractUser):
     MODERATOR = "moderator"
     ADMIN = "admin"
     ROLES = [
-        ("member", "Пользователь"),
-        ("moderator", "Модератор"),
-        ("admin", "Администратор"),
+        (MEMBER, "Пользователь"),
+        (MODERATOR, "Модератор"),
+        (ADMIN, "Администратор"),
     ]
 
     role = models.CharField(max_length=13, choices=ROLES, default="member")
     age = models.PositiveIntegerField(null=True)
+    birth_date = models.DateField(validators=[check_birth_date], null=True)
+    email = models.EmailField(unique=True, null=True)
     locations = models.ManyToManyField(Location)
 
     class Meta:
