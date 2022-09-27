@@ -1,13 +1,40 @@
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 
-from ads.models import Selection, Ad
+from ads.models import Selection, Ad, Category
+from users.models import User
+
+
+class NotTrueValidator:
+    def __call__(self, value):
+        if value:
+            raise serializers.ValidationError("New add can't be published")
 
 
 class AdSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ad
         fields = '__all__'
+
+
+class AdCreateSerializer(serializers.ModelSerializer):
+    is_published = serializers.BooleanField(validators=[NotTrueValidator()])
+
+    class Meta:
+        model = Ad
+        fields = ["name", "author_id", "price", "description", "is_published", "category_id"]
+
+    def is_valid(self, raise_exception=True):
+        self._author_id = self.initial_data.pop("author_id")
+        self._category_id = self.initial_data.pop("category_id")
+        return super().is_valid(raise_exception=raise_exception)
+
+    def create(self, validated_data):
+        validated_data['author'] = get_object_or_404(User.objects, id=self._author_id)
+        validated_data['category'] = get_object_or_404(Category.objects, id=self._category_id)
+
+        ad = Ad.objects.create(**validated_data)
+        return ad
 
 
 class AdDeleteSerializer(serializers.ModelSerializer):
