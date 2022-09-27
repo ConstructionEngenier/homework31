@@ -13,7 +13,7 @@ from rest_framework.viewsets import ModelViewSet
 from ads.models import Ad, Category, Selection
 from ads.permission import SelectionUpdatePermission, AdUpdatePermission
 from ads.serializers import SelectionSerializer, AdDeleteSerializer, SelectionDetailSerializer, \
-    SelectionCreateSerializer, SelectionUpdateSerializer, SelectionDeleteSerializer, AdSerializer
+    SelectionCreateSerializer, SelectionUpdateSerializer, SelectionDeleteSerializer, AdSerializer, AdCreateSerializer
 from bulletin_board import settings
 from users.models import User
 
@@ -125,8 +125,8 @@ class CategoryDeleteView(DeleteView):
 
 
 class AdListView(ListView):
-    model = Ad
     queryset = Ad.objects.all()
+    serializer_class = AdSerializer
 
     def get(self, request, *args, **kwargs):
         super().get(request, *args, **kwargs)
@@ -163,7 +163,7 @@ class AdListView(ListView):
                 "description": ad.description,
                 "is_published": ad.is_published,
                 "category_id": ad.category_id,
-                # "image": ad.image.url if ad.image else None,
+                "image": ad.image.url if ad.image else None,
             })
 
         response = {
@@ -181,37 +181,9 @@ class AdDetailView(RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
 
-@method_decorator(csrf_exempt, name="dispatch")
-class AdCreateView(CreateView):
-    model = Ad
-    fields = ["name", "author", "price", "description", "is_published", "category"]
-
-    def post(self, request, *args, **kwargs):
-        ad_data = json.loads(request.body)
-
-        author = get_object_or_404(User, ad_data["author_id"])
-        category = get_object_or_404(Category, ad_data["category_id"])
-
-        ad = Ad.objects.create(
-            name=ad_data["name"],
-            author=author,
-            price=ad_data["price"],
-            description=ad_data["description"],
-            is_published=ad_data["is_published"],
-            category=category,
-        )
-
-        return JsonResponse({
-            "id": ad.id,
-            "name": ad.name,
-            "author_id": ad.author_id,
-            "author": ad.author.first_name,
-            "price": ad.price,
-            "description": ad.description,
-            "is_published": ad.is_published,
-            "category_id": ad.category_id,
-            "image": ad.image.url if ad.image else None,
-        }, safe=False)
+class AdCreateView(CreateAPIView):
+    queryset = Ad.objects.all()
+    serializer_class = AdCreateSerializer
 
 
 @method_decorator(csrf_exempt, name="dispatch")
