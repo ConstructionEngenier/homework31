@@ -19,14 +19,16 @@ class AdSerializer(serializers.ModelSerializer):
 
 class AdCreateSerializer(serializers.ModelSerializer):
     is_published = serializers.BooleanField(validators=[NotTrueValidator()])
+    author = serializers.StringRelatedField(read_only=True)
+    category = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Ad
-        fields = ["name", "author_id", "price", "description", "is_published", "category_id"]
+        fields = "__all__"
 
     def is_valid(self, raise_exception=True):
-        self._author_id = self.initial_data.pop("author_id")
-        self._category_id = self.initial_data.pop("category_id")
+        self._author_id = self.initial_data.pop("author")
+        self._category_id = self.initial_data.pop("category")
         return super().is_valid(raise_exception=raise_exception)
 
     def create(self, validated_data):

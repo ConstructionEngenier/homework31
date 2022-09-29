@@ -6,23 +6,23 @@ import pytest
 @pytest.mark.django_db
 def test_create_ads(client, user, category, ad):
     expected_response = {
-        # "id": 1,
+        "id": ad.id+1,
         "name": ad.name,
-        "author_id": user.id,
+        "author": user.username,
         "price": 10,
         "description": "test description",
         "is_published": False,
-        "category_id": category.id,
-        # "image": None
+        "category": category.name,
+        "image": None
     }
 
     data = {
         "name": ad.name,
-        "author_id": user.id,
+        "author": user.id,
         "price": 10,
         "description": "test description",
         "is_published": False,
-        "category_id": category.id
+        "category": category.id
     }
 
     response = client.post(
